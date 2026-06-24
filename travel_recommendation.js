@@ -72,23 +72,29 @@ function handleSearch() {
             console.log('Fetched API Data Object:', data);
             let matchedResults = [];
 
-            // 1. Check for Beach keywords
+            // 1. Check for Beach keywords variation
             if (query === 'beach' || query === 'beaches') {
                 matchedResults = data.beaches;
             } 
-            // 2. Check for Temple keywords
+            // 2. Check for Temple keywords variation
             else if (query === 'temple' || query === 'temples') {
                 matchedResults = data.temples;
             } 
-            // 3. Flexible Country/City keyword search
+            // 3. Explicit check for generic "country" or "countries" keyword variations
+            else if (query === 'country' || query === 'countries') {
+                // Combines all internal cities arrays from your country datasets to show at least 2 options
+                data.countries.forEach(country => {
+                    matchedResults = matchedResults.concat(country.cities);
+                });
+            }
+            // 4. Flexible Specific Country/City name lookup
             else {
-                // Find a country where the name includes what the user typed (e.g., "japan" or "australia")
                 const countryMatch = data.countries.find(c => c.name.toLowerCase().includes(query));
                 
                 if (countryMatch) {
                     matchedResults = countryMatch.cities;
                 } else {
-                    // Wildcard fallback: check if they typed a specific city name directly
+                    // Wildcard fallback search for matching cities directly
                     data.countries.forEach(country => {
                         const cityMatches = country.cities.filter(city => city.name.toLowerCase().includes(query));
                         if (cityMatches.length > 0) {
@@ -98,7 +104,7 @@ function handleSearch() {
                 }
             }
             
-            // Send the results to the display function
+            // Render found records onto page
             renderResults(matchedResults);
         })
         .catch(error => {
