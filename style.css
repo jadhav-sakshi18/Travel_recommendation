@@ -190,4 +190,10 @@ form input, form textarea {
     text-align: center;
     border-radius: 6px;
     grid-column: 1 / -1;
+}.page-section-static {
+    background: var(--bg-dark);
+    color: white;
+    padding: 3rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
 }

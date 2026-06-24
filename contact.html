@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelBloom - Contact Us</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">TravelBloom</div>
+            <div class="nav-links">
+                <a href="travel_recommendation.html">Home</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact Us</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section id="contact-section" class="page-section-static">
+            <div class="contact-container">
+                <h2>Contact Us</h2>
+                <p>Have questions? Reach directly to our support agents globally.</p>
+                <form id="contactForm" onsubmit="event.preventDefault(); alert('Message submitted successfully!'); this.reset();">
+                    <label for="contactName">Name:</label>
+                    <input type="text" id="contactName" required placeholder="Your Name">
+                    
+                    <label for="contactEmail">Email:</label>
+                    <input type="email" id="contactEmail" required placeholder="Your Email">
+                    
+                    <label for="contactMessage">Message:</label>
+                    <textarea id="contactMessage" rows="5" required placeholder="Write your query here..."></textarea>
+                    
+                    <button type="submit" class="btn-submit">Submit</button>
+                </form>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

@@ -78,7 +78,7 @@ function displayResults(items) {
         const card = document.createElement('div');
         card.classList.add('result-card');
 
-        // TASK 10 OPTIONAL: Wrapped inside a try/catch block to prevent breaking country search if a timezone string is invalid
+        // Safety wrapper prevents country search crashes from invalid timezone formats
         let displayTime = "";
         if (item.timeZone) {
             try {
@@ -86,8 +86,8 @@ function displayResults(items) {
                 const formattedTime = new Date().toLocaleTimeString('en-US', options);
                 displayTime = `<p class="local-time">Local Time: ${formattedTime}</p>`;
             } catch (e) {
-                console.warn(`Invalid timezone format encountered: ${item.timeZone}`);
-                displayTime = ""; // Skip rendering time but still render the country/city card safely!
+                console.warn(`Timezone issue: ${item.timeZone}`);
+                displayTime = ""; 
             }
         }
 
@@ -103,7 +103,6 @@ function displayResults(items) {
         resultDiv.appendChild(card);
     });
 }
-
 function clearResults() {
     document.getElementById('srcInput').value = '';
     document.getElementById('result-container').innerHTML = '';
