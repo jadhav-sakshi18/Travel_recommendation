@@ -1,126 +1,110 @@
-const searchInput = document.getElementById('searchInput');
-const btnSearch = document.getElementById('btnSearch');
-const btnClear = document.getElementById('btnClear');
-const recommendationsSection = document.getElementById('recommendations');
-const resultsContainer = document.getElementById('resultsContainer');
+document.getElementById('btnSearch').addEventListener('click', searchRecommendations);
+document.getElementById('btnClear').addEventListener('click', clearResults);
 
-function getLocalTime(placeName) {
-    if (!placeName) return 'UTC';
-    let timeZone = 'UTC';
-    const name = placeName.toLowerCase();
+function showSection(sectionId) {
+    document.querySelectorAll('.page-section').forEach(section => {
+        section.classList.remove('active');
+    });
     
-    if (name.includes('sydney')) timeZone = 'Australia/Sydney';
-    else if (name.includes('melbourne')) timeZone = 'Australia/Melbourne';
-    else if (name.includes('tokyo')) timeZone = 'Asia/Tokyo';
-    else if (name.includes('kyoto')) timeZone = 'Asia/Tokyo';
-    else if (name.includes('rio') || name.includes('copacabana')) timeZone = 'America/Rio_De_Janeiro';
-    else if (name.includes('são paulo') || name.includes('sao')) timeZone = 'America/Sao_Paulo';
-    else if (name.includes('angkor')) timeZone = 'Asia/Phnom_Penh';
-    else if (name.includes('taj')) timeZone = 'Asia/Kolkata';
-    else if (name.includes('bora')) timeZone = 'Pacific/Tahiti';
-
-    try {
-        const options = { timeZone: timeZone, hour12: true, hour: 'numeric', minute: 'numeric', second: 'numeric' };
-        return new Date().toLocaleTimeString('en-US', options);
-    } catch (e) {
-        return new Date().toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: 'numeric' });
+    const searchBlock = document.getElementById('nav-search-block');
+    if (sectionId === 'home') {
+        document.getElementById('home-section').classList.add('active');
+        searchBlock.style.display = 'flex';
+    } else if (sectionId === 'about') {
+        document.getElementById('about-section').classList.add('active');
+        searchBlock.style.display = 'none';
+    } else if (sectionId === 'contact') {
+        document.getElementById('contact-section').classList.add('active');
+        searchBlock.style.display = 'none';
     }
+    clearResults();
 }
 
-function renderResults(places) {
-    resultsContainer.innerHTML = '';
-    
-    if (places && places.length > 0) {
-        recommendationsSection.classList.remove('hidden');
-        
-        places.forEach(place => {
-            const currentTime = getLocalTime(place.name);
-            const cardHTML = `
-                <div class="card">
-                    <img src="${place.imageUrl}" alt="${place.name}">
-                    <div class="card-content">
-                        <h3>${place.name}</h3>
-                        <p>${place.description}</p>
-                        <span class="local-time">🕒 Local Time: ${currentTime}</span>
-                    </div>
-                </div>
-            `;
-            resultsContainer.innerHTML += cardHTML;
-        });
+function searchRecommendations() {
+    const input = document.getElementById('srcInput').value.toLowerCase().trim();
+    const resultDiv = document.getElementById('result-container');
+    resultDiv.innerHTML = ''; 
 
-        recommendationsSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-        alert('No recommendations found. Try "beach", "temple", or a country like "Japan".');
-        recommendationsSection.classList.add('hidden');
-    }
-}
-
-function handleSearch() {
-    const query = searchInput.value.toLowerCase().trim();
-    
-    if (query === '') {
-        alert('Please enter a keyword.');
+    if (!input) {
+        resultDiv.innerHTML = '<p class="status-msg">Please enter a search keyword.</p>';
         return;
     }
 
     fetch('travel_recommendation_api.json')
         .then(response => {
-            if (!response.ok) throw new Error('Network response structure returned errors.');
+            if (!response.ok) throw new Error('Failed to capture API resources.');
             return response.json();
         })
         .then(data => {
-            console.log('Fetched API Data Object:', data);
-            let matchedResults = [];
+            let matches = [];
 
-            // 1. Check for Beach keywords variation
-            if (query === 'beach' || query === 'beaches') {
-                matchedResults = data.beaches;
-            } 
-            // 2. Check for Temple keywords variation
-            else if (query === 'temple' || query === 'temples') {
-                matchedResults = data.temples;
-            } 
-            // 3. Explicit check for generic "country" or "countries" keyword variations
-            else if (query === 'country' || query === 'countries') {
-                // Combines all internal cities arrays from your country datasets to show at least 2 options
-                data.countries.forEach(country => {
-                    matchedResults = matchedResults.concat(country.cities);
-                });
-            }
-            // 4. Flexible Specific Country/City name lookup
-            else {
-                const countryMatch = data.countries.find(c => c.name.toLowerCase().includes(query));
-                
-                if (countryMatch) {
-                    matchedResults = countryMatch.cities;
-                } else {
-                    // Wildcard fallback search for matching cities directly
+            // Task 7 logic variations matching engine
+            if (input === 'beach' || input === 'beaches') {
+                matches = data.beaches || [];
+            } else if (input === 'temple' || input === 'temples') {
+                matches = data.temples || [];
+            } else if (input === 'country' || input === 'countries') {
+                if (data.countries) {
                     data.countries.forEach(country => {
-                        const cityMatches = country.cities.filter(city => city.name.toLowerCase().includes(query));
-                        if (cityMatches.length > 0) {
-                            matchedResults = matchedResults.concat(cityMatches);
-                        }
+                        if (country.cities) matches.push(...country.cities);
                     });
                 }
+            } else {
+                // Individual direct match search logic checks (e.g. searching "Japan" or "Australia")
+                if (data.countries) {
+                    const foundCountry = data.countries.find(c => c.name.toLowerCase() === input);
+                    if (foundCountry && foundCountry.cities) {
+                        matches = foundCountry.cities;
+                    }
+                }
             }
-            
-            // Render found records onto page
-            renderResults(matchedResults);
+
+            if (matches.length > 0) {
+                displayResults(matches);
+            } else {
+                resultDiv.innerHTML = '<p class="status-msg">No recommendations found for your keyword.</p>';
+            }
         })
         .catch(error => {
-            console.error('Error fetching data:', error);
-            alert('Unable to load recommendation data.');
+            console.error('Data acquisition error:', error);
+            resultDiv.innerHTML = '<p class="status-msg">Error retrieving recommendations.</p>';
         });
 }
 
-function clearSearch() {
-    searchInput.value = '';
-    resultsContainer.innerHTML = '';
-    recommendationsSection.classList.add('hidden');
+function displayResults(items) {
+    const resultDiv = document.getElementById('result-container');
+    
+    items.forEach(item => {
+        const card = document.createElement('div');
+        card.classList.add('result-card');
+
+        // TASK 10 OPTIONAL: Wrapped inside a try/catch block to prevent breaking country search if a timezone string is invalid
+        let displayTime = "";
+        if (item.timeZone) {
+            try {
+                const options = { timeZone: item.timeZone, hour12: true, hour: 'numeric', minute: 'numeric', second: 'numeric' };
+                const formattedTime = new Date().toLocaleTimeString('en-US', options);
+                displayTime = `<p class="local-time">Local Time: ${formattedTime}</p>`;
+            } catch (e) {
+                console.warn(`Invalid timezone format encountered: ${item.timeZone}`);
+                displayTime = ""; // Skip rendering time but still render the country/city card safely!
+            }
+        }
+
+        card.innerHTML = `
+            <img src="${item.imageUrl}" alt="${item.name}">
+            <div class="card-info">
+                <h3>${item.name}</h3>
+                ${displayTime}
+                <p>${item.description}</p>
+                <button class="btn-visit">Visit</button>
+            </div>
+        `;
+        resultDiv.appendChild(card);
+    });
 }
 
-btnSearch.addEventListener('click', handleSearch);
-btnClear.addEventListener('click', clearSearch);
-searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleSearch();
-});
+function clearResults() {
+    document.getElementById('srcInput').value = '';
+    document.getElementById('result-container').innerHTML = '';
+}
